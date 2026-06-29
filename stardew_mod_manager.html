@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🌾 星露谷模组收藏馆</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        /* (原有样式基本保留，新增分类树和导出按钮相关样式) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Roboto, system-ui, sans-serif; background: #f7f3ee; color: #3e2c1b; min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+        .app { max-width: 1440px; width: 100%; background: #fffcf9; border-radius: 32px; box-shadow: 0 20px 60px rgba(62,44,27,0.12); overflow: hidden; display: flex; flex-direction: column; height: fit-content; min-height: 90vh; }
+        .header { padding: 24px 32px; background: linear-gradient(135deg, #f5efe8 0%, #faf5f0 100%); border-bottom: 2px solid #e8ddd2; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; flex-shrink: 0; }
+        .header-brand { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; color: #4a7c59; letter-spacing: -0.3px; white-space: nowrap; }
+        .header-brand i { font-size: 28px; color: #6b8c5e; }
+        .header-search { flex: 1; min-width: 200px; position: relative; }
+        .header-search input { width: 100%; padding: 10px 16px 10px 44px; border: 2px solid #ddd0c4; border-radius: 40px; font-size: 15px; background: #fffcf9; transition: border-color 0.2s, box-shadow 0.2s; outline: none; color: #3e2c1b; }
+        .header-search input:focus { border-color: #7aab7a; box-shadow: 0 0 0 4px rgba(74,124,89,0.15); }
+        .header-search .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #b09a87; font-size: 16px; pointer-events: none; }
+        .header-search .clear-search { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #b09a87; cursor: pointer; font-size: 16px; display: none; padding: 4px; }
+        .header-search .clear-search.visible { display: block; }
+        .header-search .clear-search:hover { color: #7a5a44; }
+        .header-actions { display: flex; gap: 10px; flex-shrink: 0; }
+        .btn-primary { background: #4a7c59; color: #fff; border: none; padding: 10px 22px; border-radius: 40px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s, transform 0.1s; white-space: nowrap; }
+        .btn-primary:hover { background: #3d6a4e; }
+        .btn-primary:active { transform: scale(0.96); }
+        .btn-primary i { font-size: 16px; }
+        .btn-secondary { background: #e8ddd2; color: #3e2c1b; border: none; padding: 10px 18px; border-radius: 40px; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 6px; }
+        .btn-secondary:hover { background: #dccfc2; }
+        .btn-danger { background: #c0392b; color: #fff; border: none; padding: 8px 16px; border-radius: 40px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-danger:hover { background: #a93226; }
+        .btn-outline { background: transparent; border: 2px solid #ddd0c4; color: #3e2c1b; padding: 8px 16px; border-radius: 40px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-outline:hover { background: #f5efe8; border-color: #b09a87; }
+        .main { display: flex; flex: 1; min-height: 500px; }
+        .sidebar { width: 280px; background: #faf6f2; border-right: 2px solid #e8ddd2; padding: 20px 18px 24px; flex-shrink: 0; overflow-y: auto; max-height: 75vh; }
+        .sidebar-section { margin-bottom: 24px; }
+        .sidebar-section:last-child { margin-bottom: 0; }
+        .sidebar-section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #8f7a68; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .sidebar-section-title i { font-size: 14px; }
+        .sidebar-section-title .cat-actions { margin-left: auto; display: flex; gap: 6px; }
+        .sidebar-section-title .cat-actions button { background: none; border: none; color: #b09a87; cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 12px; transition: background 0.2s; }
+        .sidebar-section-title .cat-actions button:hover { background: #ede5dc; color: #4d3a2a; }
+        .tag-match-mode { display: flex; align-items: center; gap: 12px; margin-top: 4px; font-size: 13px; color: #5f4a38; flex-wrap: wrap; }
+        .tag-match-mode label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+        .tag-match-mode input[type="radio"] { accent-color: #4a7c59; width: 14px; height: 14px; cursor: pointer; }
+        /* ---- 分类树 ---- */
+        .category-tree { list-style: none; padding-left: 0; margin: 0; }
+        .category-tree ul { list-style: none; padding-left: 20px; margin: 0; }
+        .category-tree li { margin: 2px 0; }
+        .category-tree .cat-node { display: flex; align-items: center; gap: 6px; padding: 3px 6px; border-radius: 6px; cursor: pointer; transition: background 0.15s; font-size: 14px; color: #4d3a2a; }
+        .category-tree .cat-node:hover { background: #ede5dc; }
+        .category-tree .cat-node .toggle { width: 18px; text-align: center; font-size: 12px; color: #b09a87; cursor: pointer; user-select: none; }
+        .category-tree .cat-node .toggle:hover { color: #4d3a2a; }
+        .category-tree .cat-node input[type="checkbox"] { accent-color: #4a7c59; cursor: pointer; flex-shrink: 0; }
+        .category-tree .cat-node .cat-name { flex: 1; }
+        .category-tree .cat-node .count { font-size: 12px; color: #b09a87; background: #ede5dc; padding: 0 8px; border-radius: 20px; line-height: 18px; }
+        .category-tree .cat-node .cat-actions { display: none; gap: 4px; }
+        .category-tree .cat-node:hover .cat-actions { display: flex; }
+        .category-tree .cat-node .cat-actions button { background: none; border: none; color: #b09a87; cursor: pointer; font-size: 12px; padding: 0 4px; }
+        .category-tree .cat-node .cat-actions button:hover { color: #4d3a2a; }
+        .category-tree .cat-node.active { background: #e1d5c9; }
+        .tag-cloud { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag-btn { background: #ede5dc; border: none; padding: 4px 14px; border-radius: 30px; font-size: 13px; color: #4d3a2a; cursor: pointer; transition: all 0.15s; font-weight: 500; line-height: 1.6; white-space: nowrap; }
+        .tag-btn:hover { background: #dccfc2; }
+        .tag-btn.active { background: #4a7c59; color: #fff; }
+        .tag-btn .tag-count { font-weight: 400; opacity: 0.7; margin-left: 3px; font-size: 11px; }
+        .tag-btn.active .tag-count { opacity: 0.9; }
+        .content { flex: 1; padding: 24px 28px 32px; overflow-y: auto; background: #fffcf9; }
+        .content-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #f0e8e0; }
+        .content-toolbar .info { font-size: 15px; color: #5f4a38; }
+        .content-toolbar .info strong { color: #3e2c1b; }
+        .content-toolbar .filters-active { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .filter-pill { background: #e8ddd2; padding: 2px 12px 2px 14px; border-radius: 30px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; color: #3e2c1b; }
+        .filter-pill i { cursor: pointer; font-size: 12px; color: #7a5a44; transition: color 0.2s; }
+        .filter-pill i:hover { color: #c0392b; }
+        .filter-pill .label { font-weight: 500; }
+        .btn-clear-filters { background: none; border: none; color: #8f7a68; font-size: 13px; cursor: pointer; text-decoration: underline; padding: 2px 6px; }
+        .btn-clear-filters:hover { color: #3e2c1b; }
+        .mod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; }
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #b09a87; }
+        .empty-state i { font-size: 56px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 { font-size: 20px; color: #5f4a38; margin-bottom: 8px; }
+        .empty-state p { font-size: 15px; max-width: 360px; margin: 0 auto; }
+        .mod-card { background: #fffcf9; border-radius: 20px; border: 2px solid #ede5dc; overflow: hidden; transition: all 0.25s ease; display: flex; flex-direction: column; cursor: pointer; position: relative; }
+        .mod-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(62,44,27,0.10); border-color: #cbb8a8; }
+        .mod-card-image { width: 100%; aspect-ratio: 16 / 10; background: #ede5dc; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; flex-shrink: 0; }
+        .mod-card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .mod-card:hover .mod-card-image img { transform: scale(1.02); }
+        .mod-card-image .placeholder-img { font-size: 42px; color: #b09a87; opacity: 0.5; }
+        .mod-card-body { padding: 14px 16px 16px; display: flex; flex-direction: column; flex: 1; }
+        .mod-card-title { font-size: 16px; font-weight: 600; color: #3e2c1b; margin-bottom: 8px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .mod-card-meta { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-bottom: 10px; }
+        .mod-card-meta .badge { font-size: 11px; font-weight: 500; padding: 2px 10px; border-radius: 30px; background: #ede5dc; color: #4d3a2a; display: inline-flex; align-items: center; gap: 4px; }
+        .mod-card-meta .badge.category { background: #d4e2d0; color: #2d5a3d; }
+        .mod-card-meta .badge.tag { background: #f0e8e0; color: #5f4a38; }
+        .mod-card-actions { margin-top: auto; display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid #f0e8e0; padding-top: 12px; }
+        .mod-card-actions .btn-sm { background: none; border: none; font-size: 13px; padding: 4px 10px; border-radius: 30px; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px; color: #5f4a38; }
+        .mod-card-actions .btn-sm:hover { background: #ede5dc; }
+        .mod-card-actions .btn-sm.visit { color: #4a7c59; }
+        .mod-card-actions .btn-sm.visit:hover { background: #d4e2d0; }
+        .mod-card-actions .btn-sm.edit { color: #b08a5a; }
+        .mod-card-actions .btn-sm.edit:hover { background: #f0e6d8; }
+        .mod-card-actions .btn-sm.delete:hover { background: #f5d6d0; color: #c0392b; }
+        /* ---- 模态框 ---- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(30,20,14,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; animation: fadeIn 0.2s ease; }
+        .modal-overlay.open { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        .modal { background: #fffcf9; border-radius: 32px; max-width: 580px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 32px 36px 28px; box-shadow: 0 40px 80px rgba(0,0,0,0.25); position: relative; }
+        .modal-close { position: absolute; top: 16px; right: 20px; background: none; border: none; font-size: 24px; color: #b09a87; cursor: pointer; transition: color 0.2s; padding: 4px; }
+        .modal-close:hover { color: #3e2c1b; }
+        .modal h2 { font-size: 22px; color: #3e2c1b; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+        .modal h2 i { color: #4a7c59; }
+        .modal .sub { color: #8f7a68; font-size: 14px; margin-bottom: 24px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-weight: 600; font-size: 14px; color: #3e2c1b; margin-bottom: 5px; }
+        .form-group label .required { color: #c0392b; margin-left: 2px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 2px solid #ddd0c4; border-radius: 12px; font-size: 15px; background: #fffcf9; transition: border-color 0.2s, box-shadow 0.2s; outline: none; color: #3e2c1b; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus { border-color: #7aab7a; box-shadow: 0 0 0 4px rgba(74,124,89,0.10); }
+        .form-group .hint { font-size: 12px; color: #b09a87; margin-top: 4px; }
+        .form-group .tag-input-area { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 12px; border: 2px solid #ddd0c4; border-radius: 12px; background: #fffcf9; transition: border-color 0.2s; min-height: 48px; }
+        .form-group .tag-input-area:focus-within { border-color: #7aab7a; box-shadow: 0 0 0 4px rgba(74,124,89,0.10); }
+        .form-group .tag-input-area .tag-pill { background: #ede5dc; padding: 2px 12px 2px 14px; border-radius: 30px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; color: #3e2c1b; }
+        .form-group .tag-input-area .tag-pill i { cursor: pointer; font-size: 12px; color: #7a5a44; transition: color 0.2s; }
+        .form-group .tag-input-area .tag-pill i:hover { color: #c0392b; }
+        .form-group .tag-input-area input { border: none; padding: 4px 0; flex: 1; min-width: 80px; background: transparent; outline: none; font-size: 14px; color: #3e2c1b; }
+        .form-group .tag-suggestions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+        .form-group .tag-suggestions .suggest-btn { background: #f0e8e0; border: none; padding: 2px 12px; border-radius: 30px; font-size: 12px; color: #4d3a2a; cursor: pointer; transition: background 0.15s; }
+        .form-group .tag-suggestions .suggest-btn:hover { background: #dccfc2; }
+        .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 2px solid #f0e8e0; }
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f0e8e0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbb8a8; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #b09a87; }
+        /* responsive */
+        @media (max-width: 820px) {
+            .app { border-radius: 20px; min-height: 95vh; }
+            .header { padding: 16px 20px; gap: 12px; }
+            .header-brand { font-size: 18px; }
+            .header-brand i { font-size: 22px; }
+            .main { flex-direction: column; }
+            .sidebar { width: 100%; border-right: none; border-bottom: 2px solid #e8ddd2; max-height: 300px; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+            .sidebar-section { margin-bottom: 0; }
+            .sidebar-section-title { margin-bottom: 6px; font-size: 12px; }
+            .category-tree ul { padding-left: 12px; }
+            .category-tree .cat-node { font-size: 13px; }
+            .tag-cloud { gap: 4px; }
+            .tag-btn { font-size: 12px; padding: 2px 12px; }
+            .content { padding: 16px 18px 24px; }
+            .mod-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+            .modal { padding: 24px 20px; max-width: 100%; margin: 10px; border-radius: 24px; }
+            .header-actions .btn-primary span { display: none; }
+            .tag-match-mode { font-size: 12px; gap: 8px; }
+        }
+        @media (max-width: 480px) {
+            .header { padding: 12px 14px; }
+            .header-brand { font-size: 16px; }
+            .header-search input { font-size: 14px; padding: 8px 14px 8px 38px; }
+            .mod-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+            .mod-card-body { padding: 10px 12px 12px; }
+            .mod-card-title { font-size: 14px; }
+            .mod-card-meta .badge { font-size: 10px; padding: 1px 8px; }
+            .content-toolbar .info { font-size: 13px; }
+            .btn-primary { padding: 8px 14px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app" id="app">
+        <header class="header">
+            <div class="header-brand">
+                <i class="fas fa-seedling"></i>
+                <span>模组收藏馆</span>
+            </div>
+            <div class="header-search">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" placeholder="搜索名称、分类或标签…" autocomplete="off" />
+                <button class="clear-search" id="clearSearchBtn" aria-label="清除搜索">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            </div>
+            <div class="header-actions">
+                <button class="btn-primary" id="exportBtn" title="导出备份">
+                    <i class="fas fa-file-export"></i> <span>导出备份</span>
+                </button>
+                <button class="btn-primary" id="importBtn" title="导入备份">
+                    <i class="fas fa-file-import"></i> <span>导入备份</span>
+                </button>
+                <button class="btn-primary" id="addModBtn">
+                    <i class="fas fa-plus"></i>
+                    <span>添加模组</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="main">
+            <aside class="sidebar" id="sidebar">
+                <!-- 分类树 -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">
+                        <i class="fas fa-folder-open"></i> 分类
+                        <span class="cat-actions">
+                            <button id="addRootCategoryBtn" title="新建根分类"><i class="fas fa-plus"></i></button>
+                            <button id="manageCategoriesBtn" title="管理分类"><i class="fas fa-cog"></i></button>
+                        </span>
+                    </div>
+                    <ul class="category-tree" id="categoryTree"></ul>
+                </div>
+
+                <!-- 标签 & 匹配模式 -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">
+                        <i class="fas fa-tags"></i> 标签
+                    </div>
+                    <div class="tag-match-mode">
+                        <span>匹配方式：</span>
+                        <label><input type="radio" name="tagMatch" value="all" checked /> 所有</label>
+                        <label><input type="radio" name="tagMatch" value="any" /> 任意</label>
+                    </div>
+                    <div class="tag-cloud" id="tagCloud" style="margin-top:8px;"></div>
+                </div>
+            </aside>
+
+            <main class="content">
+                <div class="content-toolbar">
+                    <div class="info" id="resultInfo">
+                        共 <strong id="modCount">0</strong> 个模组
+                    </div>
+                    <div class="filters-active" id="activeFilters"></div>
+                </div>
+                <div class="mod-grid" id="modGrid"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 表单模态框 -->
+    <div class="modal-overlay" id="formModal">
+        <div class="modal">
+            <button class="modal-close" id="formModalClose" aria-label="关闭">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2><i class="fas fa-puzzle-piece"></i> <span id="formModalTitle">添加模组</span></h2>
+            <p class="sub" id="formModalSub">填写模组信息，方便日后快速查找。</p>
+            <form id="modForm" autocomplete="off">
+                <input type="hidden" id="editId" value="" />
+                <div class="form-group">
+                    <label>模组名称 <span class="required">*</span></label>
+                    <input type="text" id="modName" placeholder="例如：海莉肖像美化" required />
+                </div>
+                <div class="form-group">
+                    <label>图片链接 <span class="required">*</span></label>
+                    <input type="url" id="modImage" placeholder="https://example.com/image.png" required />
+                    <div class="hint">支持直接粘贴图片网址</div>
+                </div>
+                <div class="form-group">
+                    <label>模组网址 <span class="required">*</span></label>
+                    <input type="url" id="modUrl" placeholder="https://nexusmods.com/..." required />
+                </div>
+                <div class="form-group">
+                    <label>汉化网址 <span style="color:#b09a87;font-weight:400;">（可选）</span></label>
+                    <input type="url" id="modHanhua" placeholder="https://example.com/hanhua" />
+                    <div class="hint">如有对应的汉化模组，可在此填写其地址</div>
+                </div>
+                <div class="form-group">
+                    <label>分类 <span class="required">*</span></label>
+                    <select id="modCategory" required>
+                        <option value="">选择分类…</option>
+                    </select>
+                    <div class="hint">
+                        <button type="button" id="addSubCategoryBtn" class="btn-outline" style="padding:2px 12px;font-size:12px;border-width:1px;margin-top:4px;">
+                            + 新建子分类
+                        </button>
+                        （先在上方选择一个父分类）
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>标签</label>
+                    <div class="tag-input-area" id="tagInputArea">
+                        <input type="text" id="tagInput" placeholder="输入标签，按回车添加" />
+                    </div>
+                    <div class="tag-suggestions" id="tagSuggestions"></div>
+                    <div class="hint">输入后按回车添加，点击标签旁的 × 可移除</div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="formCancelBtn">取消</button>
+                    <button type="submit" class="btn-primary" id="formSubmitBtn">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 删除确认模态框 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal" style="max-width:400px;">
+            <button class="modal-close" id="deleteModalClose" aria-label="关闭">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2 style="font-size:20px;"><i class="fas fa-trash-alt" style="color:#c0392b;"></i> 确认删除</h2>
+            <p style="margin:16px 0 24px;color:#5f4a38;font-size:15px;">
+                确定要删除「<strong id="deleteModName"></strong>」吗？<br />
+                此操作不可撤销。
+            </p>
+            <div class="form-actions" style="border-top:none;padding-top:0;margin-top:0;">
+                <button class="btn-secondary" id="deleteCancelBtn">取消</button>
+                <button class="btn-danger" id="deleteConfirmBtn"><i class="fas fa-trash-alt"></i> 删除</button>
+            </div>
+            <input type="hidden" id="deleteId" value="" />
+        </div>
+    </div>
+
+    <!-- 分类管理模态框（简易） -->
+    <div class="modal-overlay" id="categoryManagerModal">
+        <div class="modal" style="max-width:500px;">
+            <button class="modal-close" id="catManagerClose" aria-label="关闭">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2><i class="fas fa-sitemap"></i> 管理分类</h2>
+            <p class="sub">添加、重命名或删除分类（删除分类会同时移除其所有子分类，但不会删除模组，模组将被移至“未分类”）</p>
+            <div id="categoryManagerTree" style="max-height:400px;overflow-y:auto;margin-bottom:16px;"></div>
+            <div class="form-actions" style="border-top:none;padding-top:0;">
+                <button class="btn-secondary" id="catManagerDone">完成</button>
+            </div>
+        </div>
+    </div>
+    <!-- 隐藏的文件选择器（用于导入） -->
+    <input type="file" id="fileInput" accept=".json" style="display:none;" />
+
+    <script>
+        // ================================================================
+        //  数据层 (支持树形分类)
+        // ================================================================
+        const DEFAULT_CATEGORIES = [
+            { id: 'root1', name: '角色美化', parentId: null },
+            { id: 'root2', name: '地图相关', parentId: null },
+            { id: 'root3', name: '建筑类', parentId: null },
+            { id: 'root4', name: '家具类', parentId: null },
+            { id: 'root5', name: '功能类', parentId: null },
+            { id: 'root6', name: '扩展类', parentId: null },
+            { id: 'root7', name: '玩家美化', parentId: null },
+            { id: 'root8', name: 'UI美化', parentId: null },
+        ];
+        // 预设子分类（示例）
+        const DEFAULT_SUB_CATEGORIES = [
+            { id: 'sub1', name: '可婚对象', parentId: 'root1' },
+            { id: 'sub2', name: '非可婚对象', parentId: 'root1' },
+            { id: 'sub3', name: '扩展角色', parentId: 'root1' },
+            { id: 'sub4', name: '地图着色', parentId: 'root2' },
+            { id: 'sub5', name: '地图扩展', parentId: 'root2' },
+            { id: 'sub6', name: '原版地图修改', parentId: 'root2' },
+            { id: 'sub7', name: 'AT美化', parentId: 'root3' },
+            { id: 'sub8', name: 'CP美化', parentId: 'root3' },
+            { id: 'sub9', name: '新增建筑', parentId: 'root3' },
+        ];
+
+        const DEFAULT_TAGS = ['肖像', '行走图', '冬装', '海莉', '潘妮', '艾比盖尔', 'CP', 'AT', 'FS', 'DGA', '可婚对象', '非可婚对象'];
+        const STORAGE_KEY = 'stardew_mod_collection_v2';
+
+        // ================================================================
+        //  状态
+        // ================================================================
+        let mods = [];
+        let categories = [];          // 扁平数组 { id, name, parentId }
+        let allTags = [];
+        let selectedCategoryIds = new Set(); // 存储选中的分类ID（包含子孙）
+        let selectedTags = new Set();
+        let searchQuery = '';
+        let tagMatchAll = true;
+        let editingId = null;
+
+        // 树展开状态 (存储展开的节点ID)
+        let expandedNodes = new Set();
+
+        // ================================================================
+        //  数据读写 + 迁移
+        // ================================================================
+        function loadData() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    mods = data.mods || [];
+                    categories = data.categories || [];
+                    allTags = data.allTags || [];
+                    // 如果 categories 是旧版字符串数组，进行迁移
+                    if (categories.length > 0 && typeof categories[0] === 'string') {
+                        migrateFromOldCategories(categories);
+                    }
+                    // 确保预设分类存在
+                    mergeDefaultCategories();
+                    // 确保标签包含默认
+                    DEFAULT_TAGS.forEach(t => { if (!allTags.includes(t)) allTags.push(t); });
+                } else {
+                    // 全新初始化
+                    mods = [];
+                    categories = [...DEFAULT_CATEGORIES, ...DEFAULT_SUB_CATEGORIES];
+                    allTags = [...DEFAULT_TAGS];
+                }
+            } catch (e) {
+                console.warn('数据加载失败，使用默认值', e);
+                mods = [];
+                categories = [...DEFAULT_CATEGORIES, ...DEFAULT_SUB_CATEGORIES];
+                allTags = [...DEFAULT_TAGS];
+            }
+            // 去重
+            categories = categories.filter((cat, idx, self) => self.findIndex(c => c.id === cat.id) === idx);
+            allTags = [...new Set(allTags)];
+            // 确保模组的 categoryId 存在，若不存在则设为 null (未分类)
+            mods.forEach(mod => {
+                if (mod.categoryId && !categories.some(c => c.id === mod.categoryId)) {
+                    mod.categoryId = null;
+                }
+                // 兼容旧字段 category (字符串) -> 尝试映射
+                if (mod.category && typeof mod.category === 'string' && !mod.categoryId) {
+                    const found = categories.find(c => c.name === mod.category);
+                    if (found) mod.categoryId = found.id;
+                    else {
+                        // 创建新分类
+                        const newId = 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,4);
+                        categories.push({ id: newId, name: mod.category, parentId: null });
+                        mod.categoryId = newId;
+                    }
+                    delete mod.category; // 移除旧字段
+                }
+                // 如果没有 categoryId，置为 null
+                if (!mod.categoryId) mod.categoryId = null;
+            });
+            // 保存迁移后的数据
+            saveData();
+        }
+
+        function migrateFromOldCategories(oldCatArray) {
+            // oldCatArray 是字符串数组
+            const newCats = [];
+            oldCatArray.forEach(name => {
+                const id = 'cat_' + name.replace(/\s/g, '_') + '_' + Math.random().toString(36).slice(2,4);
+                newCats.push({ id, name, parentId: null });
+            });
+            categories = newCats;
+            // 同时迁移模组
+            mods.forEach(mod => {
+                if (mod.category && typeof mod.category === 'string') {
+                    const found = categories.find(c => c.name === mod.category);
+                    if (found) mod.categoryId = found.id;
+                    delete mod.category;
+                }
+            });
+            // 添加默认子分类示例（但用户可能已经自定义，我们仅当 categories 为空时添加）
+            if (categories.length === 0) {
+                categories = [...DEFAULT_CATEGORIES, ...DEFAULT_SUB_CATEGORIES];
+            }
+        }
+
+        function mergeDefaultCategories() {
+            // 确保默认根分类存在
+            DEFAULT_CATEGORIES.forEach(def => {
+                if (!categories.some(c => c.id === def.id)) {
+                    categories.push({ ...def });
+                }
+            });
+            // 确保默认子分类存在（但仅当父分类存在）
+            DEFAULT_SUB_CATEGORIES.forEach(def => {
+                if (categories.some(c => c.id === def.parentId) && !categories.some(c => c.id === def.id)) {
+                    categories.push({ ...def });
+                }
+            });
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    mods,
+                    categories,
+                    allTags
+                }));
+            } catch (e) {
+                console.warn('数据保存失败', e);
+            }
+        }
+
+        // ================================================================
+        //  分类树工具函数
+        // ================================================================
+        function getCategory(id) {
+            return categories.find(c => c.id === id);
+        }
+
+        function getChildren(id) {
+            return categories.filter(c => c.parentId === id);
+        }
+
+        function getDescendantIds(id) {
+            let result = [id];
+            const children = getChildren(id);
+            children.forEach(child => {
+                result = result.concat(getDescendantIds(child.id));
+            });
+            return result;
+        }
+
+        function getCategoryNamePath(id) {
+            const cat = getCategory(id);
+            if (!cat) return '';
+            if (cat.parentId) {
+                const parent = getCategory(cat.parentId);
+                if (parent) return getCategoryNamePath(parent.id) + ' > ' + cat.name;
+                return cat.name;
+            }
+            return cat.name;
+        }
+
+        function getCategoryFullName(id) {
+            const cat = getCategory(id);
+            if (!cat) return '';
+            let name = cat.name;
+            let parent = getCategory(cat.parentId);
+            while (parent) {
+                name = parent.name + ' > ' + name;
+                parent = getCategory(parent.parentId);
+            }
+            return name;
+        }
+
+        function buildCategoryTree(flatCategories) {
+            const map = {};
+            flatCategories.forEach(c => { map[c.id] = { ...c, children: [] }; });
+            const roots = [];
+            flatCategories.forEach(c => {
+                if (c.parentId && map[c.parentId]) {
+                    map[c.parentId].children.push(map[c.id]);
+                } else {
+                    roots.push(map[c.id]);
+                }
+            });
+            // 按名称排序
+            const sortFn = (a, b) => a.name.localeCompare(b.name);
+            roots.sort(sortFn);
+            const sortChildren = (node) => {
+                node.children.sort(sortFn);
+                node.children.forEach(sortChildren);
+            };
+            roots.forEach(sortChildren);
+            return roots;
+        }
+
+        // ================================================================
+        //  筛选逻辑
+        // ================================================================
+        function getFilteredMods() {
+            return mods.filter(mod => {
+                // 搜索
+                if (searchQuery.trim() !== '') {
+                    const q = searchQuery.trim().toLowerCase();
+                    const searchText = [
+                        mod.name,
+                        mod.categoryId ? getCategoryFullName(mod.categoryId) : '',
+                        ...(mod.tags || [])
+                    ].join(' ').toLowerCase();
+                    if (!searchText.includes(q)) return false;
+                }
+                // 分类筛选：选中分类及其子孙
+                if (selectedCategoryIds.size > 0) {
+                    let inCategory = false;
+                    for (const catId of selectedCategoryIds) {
+                        const descendants = getDescendantIds(catId);
+                        if (descendants.includes(mod.categoryId)) {
+                            inCategory = true;
+                            break;
+                        }
+                    }
+                    if (!inCategory) return false;
+                }
+                // 标签筛选
+// 标签筛选
+if (selectedTags.size > 0) {
+    const modTags = mod.tags || [];
+    const tagArray = Array.from(selectedTags);  // 转为数组
+    if (tagMatchAll) {
+        if (!tagArray.every(t => modTags.includes(t))) return false;
+    } else {
+        if (!tagArray.some(t => modTags.includes(t))) return false;
+    }
+}
+                return true;
+            });
+        }
+
+        function getActiveFilters() {
+            const filters = [];
+            if (selectedCategoryIds.size > 0) {
+                const names = [];
+                selectedCategoryIds.forEach(id => {
+                    const cat = getCategory(id);
+                    if (cat) names.push(cat.name);
+                });
+                filters.push({ type: 'category', value: names });
+            }
+            if (selectedTags.size > 0) filters.push({ type: 'tag', value: [...selectedTags] });
+            if (searchQuery.trim() !== '') filters.push({ type: 'search', value: searchQuery.trim() });
+            return filters;
+        }
+
+        // ================================================================
+        //  渲染函数
+        // ================================================================
+        function renderCategoryTree() {
+            const container = document.getElementById('categoryTree');
+            const roots = buildCategoryTree(categories);
+            container.innerHTML = '';
+
+            function renderNode(node, depth) {
+                const li = document.createElement('li');
+                const div = document.createElement('div');
+                div.className = 'cat-node';
+                div.dataset.catId = node.id;
+                if (selectedCategoryIds.has(node.id)) div.classList.add('active');
+
+                // 展开/折叠按钮
+                const hasChildren = node.children.length > 0;
+                const toggle = document.createElement('span');
+                toggle.className = 'toggle';
+                if (hasChildren) {
+                    const isExpanded = expandedNodes.has(node.id);
+                    toggle.textContent = isExpanded ? '▼' : '▶';
+                    toggle.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (expandedNodes.has(node.id)) expandedNodes.delete(node.id);
+                        else expandedNodes.add(node.id);
+                        renderCategoryTree();
+                    });
+                } else {
+                    toggle.textContent = '•';
+                    toggle.style.color = '#ccc';
+                }
+                div.appendChild(toggle);
+
+                // 复选框
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.checked = selectedCategoryIds.has(node.id);
+                cb.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    if (cb.checked) {
+                        // 选中该节点及其所有子孙
+                        const descendants = getDescendantIds(node.id);
+                        descendants.forEach(id => selectedCategoryIds.add(id));
+                    } else {
+                        // 取消选中该节点及其所有子孙
+                        const descendants = getDescendantIds(node.id);
+                        descendants.forEach(id => selectedCategoryIds.delete(id));
+                    }
+                    applyFiltersAndRender();
+                });
+                div.appendChild(cb);
+
+                // 分类名称
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'cat-name';
+                nameSpan.textContent = node.name;
+                nameSpan.addEventListener('click', () => {
+                    // 点击名称也可以切换复选框
+                    cb.checked = !cb.checked;
+                    cb.dispatchEvent(new Event('change'));
+                });
+                div.appendChild(nameSpan);
+
+                // 计数
+                const count = mods.filter(m => {
+                    const desc = getDescendantIds(node.id);
+                    return desc.includes(m.categoryId);
+                }).length;
+                const countSpan = document.createElement('span');
+                countSpan.className = 'count';
+                countSpan.textContent = count;
+                div.appendChild(countSpan);
+
+                // 操作按钮（管理）
+                const actions = document.createElement('span');
+                actions.className = 'cat-actions';
+                const addBtn = document.createElement('button');
+                addBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                addBtn.title = '添加子分类';
+                addBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const name = prompt('请输入子分类名称：');
+                    if (name && name.trim()) {
+                        const newId = 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,4);
+                        categories.push({ id: newId, name: name.trim(), parentId: node.id });
+                        saveData();
+                        renderCategoryTree();
+                        applyFiltersAndRender();
+                    }
+                });
+                actions.appendChild(addBtn);
+
+                const renameBtn = document.createElement('button');
+                renameBtn.innerHTML = '<i class="fas fa-pen"></i>';
+                renameBtn.title = '重命名';
+                renameBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const newName = prompt('请输入新名称：', node.name);
+                    if (newName && newName.trim()) {
+                        const cat = getCategory(node.id);
+                        if (cat) {
+                            cat.name = newName.trim();
+                            saveData();
+                            renderCategoryTree();
+                            applyFiltersAndRender();
+                        }
+                    }
+                });
+                actions.appendChild(renameBtn);
+
+                const delBtn = document.createElement('button');
+                delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                delBtn.title = '删除分类（子分类将一并删除）';
+                delBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm(`确定要删除分类“${node.name}”及其所有子分类吗？\n模组不会被删除，但会被移至“未分类”。`)) {
+                        // 删除该节点及其子孙
+                        const descendants = getDescendantIds(node.id);
+                        categories = categories.filter(c => !descendants.includes(c.id));
+                        // 将模组的 categoryId 置为 null
+                        mods.forEach(m => {
+                            if (descendants.includes(m.categoryId)) m.categoryId = null;
+                        });
+                        // 从选中集合移除
+                        descendants.forEach(id => selectedCategoryIds.delete(id));
+                        saveData();
+                        renderCategoryTree();
+                        applyFiltersAndRender();
+                    }
+                });
+                actions.appendChild(delBtn);
+
+                div.appendChild(actions);
+                li.appendChild(div);
+
+                // 子节点
+                if (hasChildren && expandedNodes.has(node.id)) {
+                    const ul = document.createElement('ul');
+                    node.children.forEach(child => {
+                        ul.appendChild(renderNode(child, depth + 1));
+                    });
+                    li.appendChild(ul);
+                }
+
+                return li;
+            }
+
+            roots.forEach(root => {
+                container.appendChild(renderNode(root, 0));
+            });
+        }
+
+        function renderSidebar() {
+            renderCategoryTree();
+
+            // 标签
+            const tagContainer = document.getElementById('tagCloud');
+            tagContainer.innerHTML = '';
+            const sortedTags = [...allTags].sort((a, b) => {
+                const ca = mods.filter(m => m.tags && m.tags.includes(a)).length;
+                const cb = mods.filter(m => m.tags && m.tags.includes(b)).length;
+                if (ca !== cb) return cb - ca;
+                return a.localeCompare(b);
+            });
+            sortedTags.forEach(tag => {
+                const count = mods.filter(m => m.tags && m.tags.includes(tag)).length;
+                const btn = document.createElement('button');
+                btn.className = 'tag-btn';
+                if (selectedTags.has(tag)) btn.classList.add('active');
+                btn.innerHTML = `${tag} <span class="tag-count">${count}</span>`;
+                btn.addEventListener('click', () => {
+                    if (selectedTags.has(tag)) selectedTags.delete(tag);
+                    else selectedTags.add(tag);
+                    applyFiltersAndRender();
+                });
+                tagContainer.appendChild(btn);
+            });
+
+            // 标签匹配模式
+            document.querySelectorAll('input[name="tagMatch"]').forEach(radio => {
+                radio.checked = (radio.value === 'all' && tagMatchAll) || (radio.value === 'any' && !tagMatchAll);
+                radio.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        tagMatchAll = (e.target.value === 'all');
+                        applyFiltersAndRender();
+                    }
+                });
+            });
+        }
+
+        function renderMods() {
+            const grid = document.getElementById('modGrid');
+            const filtered = getFilteredMods();
+            document.getElementById('modCount').textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-box-open"></i>
+                        <h3>没有匹配的模组</h3>
+                        <p>试试调整筛选条件，或点击右上角添加新模组。</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = '';
+            filtered.forEach(mod => {
+                const card = document.createElement('div');
+                card.className = 'mod-card';
+
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'mod-card-image';
+                const img = document.createElement('img');
+                img.alt = mod.name;
+                img.loading = 'lazy';
+                img.src = mod.imageUrl || '';
+                img.onerror = function() {
+                    this.style.display = 'none';
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'placeholder-img';
+                    placeholder.innerHTML = '<i class="fas fa-image"></i>';
+                    this.parentNode.appendChild(placeholder);
+                };
+                imgDiv.appendChild(img);
+                card.appendChild(imgDiv);
+
+                const body = document.createElement('div');
+                body.className = 'mod-card-body';
+                const title = document.createElement('div');
+                title.className = 'mod-card-title';
+                title.textContent = mod.name;
+                body.appendChild(title);
+
+                const meta = document.createElement('div');
+                meta.className = 'mod-card-meta';
+                // 分类显示完整路径
+                if (mod.categoryId) {
+                    const fullName = getCategoryFullName(mod.categoryId);
+                    const catBadge = document.createElement('span');
+                    catBadge.className = 'badge category';
+                    catBadge.innerHTML = `<i class="fas fa-folder"></i> ${fullName}`;
+                    meta.appendChild(catBadge);
+                }
+                if (mod.tags && mod.tags.length > 0) {
+                    mod.tags.forEach(tag => {
+                        const tagBadge = document.createElement('span');
+                        tagBadge.className = 'badge tag';
+                        tagBadge.innerHTML = `<i class="fas fa-tag"></i> ${tag}`;
+                        meta.appendChild(tagBadge);
+                    });
+                }
+                body.appendChild(meta);
+
+                const actions = document.createElement('div');
+                actions.className = 'mod-card-actions';
+                const visitBtn = document.createElement('button');
+                visitBtn.className = 'btn-sm visit';
+                visitBtn.innerHTML = '<i class="fas fa-external-link-alt"></i> 访问';
+                visitBtn.addEventListener('click', (e) => { e.stopPropagation(); if (mod.url) window.open(mod.url, '_blank'); });
+                actions.appendChild(visitBtn);
+                // 汉化按钮（如果有）
+                if (mod.hanhuaUrl) {
+                const hanhuaBtn = document.createElement('button');
+                hanhuaBtn.className = 'btn-sm edit';  // 可复用样式
+                hanhuaBtn.innerHTML = '<i class="fas fa-language"></i> 汉化';
+                hanhuaBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (mod.hanhuaUrl) window.open(mod.hanhuaUrl, '_blank');
+                });
+                actions.appendChild(hanhuaBtn);
+            }
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn-sm edit';
+                editBtn.innerHTML = '<i class="fas fa-pen"></i> 编辑';
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openFormModal(mod);
+                });
+                actions.appendChild(editBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn-sm delete';
+                deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openDeleteModal(mod.id, mod.name);
+                });
+                actions.appendChild(deleteBtn);
+
+                body.appendChild(actions);
+                card.appendChild(body);
+                card.addEventListener('click', () => { if (mod.url) window.open(mod.url, '_blank'); });
+                grid.appendChild(card);
+            });
+        }
+
+        function renderActiveFilters() {
+            const container = document.getElementById('activeFilters');
+            const filters = getActiveFilters();
+            if (filters.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            let html = '';
+            filters.forEach(f => {
+                if (f.type === 'category') {
+                    f.value.forEach(name => {
+                        html += `<span class="filter-pill">
+                            <span class="label">📁 ${name}</span>
+                            <i class="fas fa-times" data-filter="category" data-value="${name}"></i>
+                        </span>`;
+                    });
+                } else if (f.type === 'tag') {
+                    f.value.forEach(tag => {
+                        html += `<span class="filter-pill">
+                            <span class="label">🏷️ ${tag}</span>
+                            <i class="fas fa-times" data-filter="tag" data-value="${tag}"></i>
+                        </span>`;
+                    });
+                } else if (f.type === 'search') {
+                    html += `<span class="filter-pill">
+                        <span class="label">🔍 "${f.value}"</span>
+                        <i class="fas fa-times" data-filter="search"></i>
+                    </span>`;
+                }
+            });
+            html += `<button class="btn-clear-filters" id="clearAllFiltersBtn">清除所有筛选</button>`;
+            container.innerHTML = html;
+
+            container.querySelectorAll('.filter-pill i[data-filter]').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const type = el.dataset.filter;
+                    const value = el.dataset.value;
+                    if (type === 'category' && value) {
+                        // 根据名称找到分类ID并移除
+                        const cat = categories.find(c => c.name === value);
+                        if (cat) {
+                            const descendants = getDescendantIds(cat.id);
+                            descendants.forEach(id => selectedCategoryIds.delete(id));
+                        }
+                    } else if (type === 'tag' && value) {
+                        selectedTags.delete(value);
+                    } else if (type === 'search') {
+                        searchQuery = '';
+                        document.getElementById('searchInput').value = '';
+                        document.getElementById('clearSearchBtn').classList.remove('visible');
+                    }
+                    applyFiltersAndRender();
+                });
+            });
+            const clearAll = document.getElementById('clearAllFiltersBtn');
+            if (clearAll) {
+                clearAll.addEventListener('click', () => {
+                    selectedCategoryIds.clear();
+                    selectedTags.clear();
+                    searchQuery = '';
+                    document.getElementById('searchInput').value = '';
+                    document.getElementById('clearSearchBtn').classList.remove('visible');
+                    applyFiltersAndRender();
+                });
+            }
+        }
+
+        function renderAll() {
+            renderSidebar();
+            renderMods();
+            renderActiveFilters();
+        }
+
+       function applyFiltersAndRender() {
+    renderAll();
+}
+
+        // ================================================================
+        //  表单模态框
+        // ================================================================
+        function populateCategorySelect(selectedId) {
+            const select = document.getElementById('modCategory');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">选择分类…</option>';
+            // 构建树形选项，缩进显示
+            const roots = buildCategoryTree(categories);
+            function addOptions(node, prefix) {
+                const opt = document.createElement('option');
+                opt.value = node.id;
+                opt.textContent = prefix + node.name;
+                select.appendChild(opt);
+                if (expandedNodes.has(node.id)) {
+                    node.children.forEach(child => addOptions(child, prefix + '  '));
+                } else {
+                    // 如果折叠，只显示一级子节点？我们可以默认全部展开，或者根据用户展开状态，但为了选择方便，我们全部展开
+                    // 但我们只显示两级缩进？我们可以全部展开，但可能太多。采用递归全部显示，前缀用 '—'
+                    node.children.forEach(child => addOptions(child, prefix + '—'));
+                }
+            }
+            roots.forEach(root => addOptions(root, ''));
+            if (selectedId && categories.some(c => c.id === selectedId)) {
+                select.value = selectedId;
+            } else if (currentVal && categories.some(c => c.id === currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
+        function getSelectedTags() {
+            const pills = document.querySelectorAll('#tagInputArea .tag-pill');
+            return Array.from(pills).map(p => p.dataset.tag);
+        }
+
+        function addTagPill(tag) {
+            const area = document.getElementById('tagInputArea');
+            const existing = area.querySelectorAll('.tag-pill');
+            for (const pill of existing) {
+                if (pill.dataset.tag === tag) return;
+            }
+            const pill = document.createElement('span');
+            pill.className = 'tag-pill';
+            pill.dataset.tag = tag;
+            pill.innerHTML = `${tag} <i class="fas fa-times" data-tag="${tag}"></i>`;
+            pill.querySelector('i').addEventListener('click', () => {
+                pill.remove();
+                renderTagSuggestions();
+            });
+            const input = document.getElementById('tagInput');
+            area.insertBefore(pill, input);
+            renderTagSuggestions();
+        }
+
+        function renderTagSuggestions() {
+            const container = document.getElementById('tagSuggestions');
+            const selected = getSelectedTags();
+            const available = allTags.filter(t => !selected.includes(t));
+            if (available.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = '';
+            available.forEach(tag => {
+                const btn = document.createElement('button');
+                btn.className = 'suggest-btn';
+                btn.textContent = tag;
+                btn.addEventListener('click', () => {
+                    addTagPill(tag);
+                    document.getElementById('tagInput').focus();
+                });
+                container.appendChild(btn);
+            });
+        }
+
+        function openFormModal(modData) {
+            const overlay = document.getElementById('formModal');
+            const title = document.getElementById('formModalTitle');
+            const sub = document.getElementById('formModalSub');
+            const form = document.getElementById('modForm');
+            const editId = document.getElementById('editId');
+            const nameInput = document.getElementById('modName');
+            const imageInput = document.getElementById('modImage');
+            const urlInput = document.getElementById('modUrl');
+            const categorySelect = document.getElementById('modCategory');
+            form.reset();
+            editId.value = '';
+            editingId = null;
+            document.querySelectorAll('#tagInputArea .tag-pill').forEach(el => el.remove());
+            document.getElementById('tagInput').value = '';
+            populateCategorySelect(null);
+
+            if (modData) {
+                title.textContent = '编辑模组';
+                sub.textContent = '修改模组信息。';
+                editId.value = modData.id;
+                editingId = modData.id;
+                nameInput.value = modData.name;
+                imageInput.value = modData.imageUrl || '';
+                urlInput.value = modData.url || '';
+                document.getElementById('modHanhua').value = modData.hanhuaUrl || '';
+                populateCategorySelect(modData.categoryId);
+                if (modData.tags) {
+                    modData.tags.forEach(tag => addTagPill(tag));
+                }
+                document.getElementById('formSubmitBtn').innerHTML = '<i class="fas fa-pen"></i> 更新';
+            } else {
+                title.textContent = '添加模组';
+                sub.textContent = '填写模组信息，方便日后快速查找。';
+                document.getElementById('formSubmitBtn').innerHTML = '<i class="fas fa-save"></i> 保存';
+            }
+            renderTagSuggestions();
+            overlay.classList.add('open');
+        }
+
+        function closeFormModal() { document.getElementById('formModal').classList.remove('open'); }
+
+        function openDeleteModal(id, name) {
+            document.getElementById('deleteId').value = id;
+            document.getElementById('deleteModName').textContent = name;
+            document.getElementById('deleteModal').classList.add('open');
+        }
+        function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('open'); }
+
+        // ================================================================
+        //  CRUD
+        // ================================================================
+        function addMod(data) {
+            const newMod = {
+                id: generateId(),
+                name: data.name.trim(),
+                imageUrl: data.imageUrl.trim(),
+                url: data.url.trim(),
+                categoryId: data.categoryId || null,
+                tags: data.tags || [],
+                hanhuaUrl: data.hanhuaUrl || '',
+                createdAt: new Date().toISOString()
+            };
+            mods.push(newMod);
+            // 同步标签
+            newMod.tags.forEach(tag => { if (!allTags.includes(tag)) allTags.push(tag); });
+            saveData();
+            applyFiltersAndRender();
+        }
+
+        function updateMod(id, data) {
+            const idx = mods.findIndex(m => m.id === id);
+            if (idx === -1) return;
+            const old = mods[idx];
+            const updated = {
+                ...old,
+                name: data.name.trim(),
+                imageUrl: data.imageUrl.trim(),
+                url: data.url.trim(),
+                categoryId: data.categoryId || null,
+                tags: data.tags || [],
+                hanhuaUrl: data.hanhuaUrl || ''
+            };
+            mods[idx] = updated;
+            updated.tags.forEach(tag => { if (!allTags.includes(tag)) allTags.push(tag); });
+            saveData();
+            applyFiltersAndRender();
+        }
+
+        function deleteMod(id) {
+            mods = mods.filter(m => m.id !== id);
+            saveData();
+            applyFiltersAndRender();
+        }
+
+        function generateId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+        // ================================================================
+        //  导出备份
+        // ================================================================
+        function exportBackup() {
+            const data = {
+                mods,
+                categories,
+                allTags,
+                version: '2.0',
+                exportedAt: new Date().toISOString()
+            };
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `stardew-mods-backup-${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        function importBackup() {
+    const fileInput = document.getElementById('fileInput');
+    fileInput.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (!data.mods || !data.categories || !data.allTags) {
+                    alert('无效的备份文件！');
+                    return;
+                }
+                // 确认覆盖
+                if (confirm('导入将替换当前所有数据，确定继续吗？')) {
+                    mods = data.mods || [];
+                    categories = data.categories || [];
+                    allTags = data.allTags || [];
+                    saveData();
+                    applyFiltersAndRender();
+                    alert('导入成功！');
+                }
+            } catch (err) {
+                alert('文件解析失败：' + err.message);
+            }
+            fileInput.value = ''; // 重置
+        };
+        reader.readAsText(file);
+    };
+    fileInput.click();
+}
+
+        // ================================================================
+        //  事件绑定
+        // ================================================================
+        function initEventListeners() {
+            // 搜索
+            const searchInput = document.getElementById('searchInput');
+            const clearSearch = document.getElementById('clearSearchBtn');
+            searchInput.addEventListener('input', () => {
+                searchQuery = searchInput.value;
+                clearSearch.classList.toggle('visible', searchQuery.trim() !== '');
+                applyFiltersAndRender();
+            });
+            clearSearch.addEventListener('click', () => {
+                searchInput.value = '';
+                searchQuery = '';
+                clearSearch.classList.remove('visible');
+                applyFiltersAndRender();
+            });
+
+            // 导出
+            document.getElementById('exportBtn').addEventListener('click', exportBackup);
+            //导入
+            document.getElementById('importBtn').addEventListener('click', importBackup);
+
+            // 添加模组
+            document.getElementById('addModBtn').addEventListener('click', () => openFormModal(null));
+
+            // 新建根分类
+            document.getElementById('addRootCategoryBtn').addEventListener('click', () => {
+                const name = prompt('请输入新根分类名称：');
+                if (name && name.trim()) {
+                    const newId = 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,4);
+                    categories.push({ id: newId, name: name.trim(), parentId: null });
+                    saveData();
+                    renderCategoryTree();
+                    applyFiltersAndRender();
+                }
+            });
+
+            // 管理分类
+            document.getElementById('manageCategoriesBtn').addEventListener('click', () => {
+                openCategoryManager();
+            });
+
+            // 表单模态框关闭
+            document.getElementById('formModalClose').addEventListener('click', closeFormModal);
+            document.getElementById('formCancelBtn').addEventListener('click', closeFormModal);
+            document.getElementById('formModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeFormModal();
+            });
+
+            // 标签输入
+            const tagInput = document.getElementById('tagInput');
+            tagInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const val = tagInput.value.trim();
+                    if (val === '') return;
+                    const selected = getSelectedTags();
+                    if (selected.includes(val)) { tagInput.value = ''; return; }
+                    addTagPill(val);
+                    if (!allTags.includes(val)) allTags.push(val);
+                    tagInput.value = '';
+                    renderTagSuggestions();
+                }
+            });
+
+            // 新建子分类（在表单中）
+            document.getElementById('addSubCategoryBtn').addEventListener('click', () => {
+                const select = document.getElementById('modCategory');
+                const parentId = select.value;
+                if (!parentId) {
+                    alert('请先在上方选择一个父分类（从下拉列表中选择）');
+                    return;
+                }
+                const name = prompt('请输入子分类名称：');
+                if (name && name.trim()) {
+                    const newId = 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,4);
+                    categories.push({ id: newId, name: name.trim(), parentId: parentId });
+                    saveData();
+                    populateCategorySelect(parentId);
+                    // 自动选中新分类
+                    document.getElementById('modCategory').value = newId;
+                    renderCategoryTree();
+                    applyFiltersAndRender();
+                }
+            });
+
+            // 表单提交
+            document.getElementById('modForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('modName').value.trim();
+                const imageUrl = document.getElementById('modImage').value.trim();
+                const url = document.getElementById('modUrl').value.trim();
+                const categoryId = document.getElementById('modCategory').value;
+                const tags = getSelectedTags();
+                const editId = document.getElementById('editId').value;
+                if (!name || !imageUrl || !url || !categoryId) {
+                    alert('请填写所有必填项（名称、图片链接、网址、分类）');
+                    return;
+                }
+                const hanhuaUrl = document.getElementById('modHanhua').value.trim();
+                const data = { name, imageUrl, url, categoryId, tags, hanhuaUrl };
+                if (editId) updateMod(editId, data);
+                else addMod(data);
+                closeFormModal();
+            });
+
+            // 删除模态框
+            document.getElementById('deleteModalClose').addEventListener('click', closeDeleteModal);
+            document.getElementById('deleteCancelBtn').addEventListener('click', closeDeleteModal);
+            document.getElementById('deleteModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeDeleteModal();
+            });
+            document.getElementById('deleteConfirmBtn').addEventListener('click', () => {
+                const id = document.getElementById('deleteId').value;
+                if (id) { deleteMod(id); closeDeleteModal(); }
+            });
+
+            // 分类管理模态框
+            document.getElementById('catManagerClose').addEventListener('click', () => {
+                document.getElementById('categoryManagerModal').classList.remove('open');
+            });
+            document.getElementById('catManagerDone').addEventListener('click', () => {
+                document.getElementById('categoryManagerModal').classList.remove('open');
+            });
+
+            // ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (document.getElementById('formModal').classList.contains('open')) closeFormModal();
+                    if (document.getElementById('deleteModal').classList.contains('open')) closeDeleteModal();
+                    if (document.getElementById('categoryManagerModal').classList.contains('open'))
+                        document.getElementById('categoryManagerModal').classList.remove('open');
+                }
+            });
+        }
+
+        // ================================================================
+        //  分类管理器（简易）
+        // ================================================================
+        function openCategoryManager() {
+            const modal = document.getElementById('categoryManagerModal');
+            const container = document.getElementById('categoryManagerTree');
+            container.innerHTML = '';
+            const roots = buildCategoryTree(categories);
+
+            function renderNode(node) {
+                const div = document.createElement('div');
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                div.style.padding = '4px 0';
+                div.style.borderBottom = '1px solid #f0e8e0';
+                const indent = document.createElement('span');
+                indent.style.width = (node.parentId ? '20px' : '0');
+                indent.textContent = node.parentId ? '└─' : '';
+                div.appendChild(indent);
+                const nameSpan = document.createElement('span');
+                nameSpan.style.flex = '1';
+                nameSpan.textContent = node.name;
+                div.appendChild(nameSpan);
+                const actions = document.createElement('span');
+                const addBtn = document.createElement('button');
+                addBtn.className = 'btn-outline';
+                addBtn.style.padding = '2px 8px';
+                addBtn.style.fontSize = '12px';
+                addBtn.textContent = '添加子';
+                addBtn.addEventListener('click', () => {
+                    const name = prompt('输入子分类名称：');
+                    if (name && name.trim()) {
+                        const newId = 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,4);
+                        categories.push({ id: newId, name: name.trim(), parentId: node.id });
+                        saveData();
+                        openCategoryManager(); // 刷新
+                        applyFiltersAndRender();
+                    }
+                });
+                actions.appendChild(addBtn);
+                const renameBtn = document.createElement('button');
+                renameBtn.className = 'btn-outline';
+                renameBtn.style.padding = '2px 8px';
+                renameBtn.style.fontSize = '12px';
+                renameBtn.textContent = '重命名';
+                renameBtn.addEventListener('click', () => {
+                    const newName = prompt('输入新名称：', node.name);
+                    if (newName && newName.trim()) {
+                        const cat = getCategory(node.id);
+                        if (cat) { cat.name = newName.trim(); saveData(); openCategoryManager(); applyFiltersAndRender(); }
+                    }
+                });
+                actions.appendChild(renameBtn);
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn-outline';
+                delBtn.style.padding = '2px 8px';
+                delBtn.style.fontSize = '12px';
+                delBtn.style.color = '#c0392b';
+                delBtn.textContent = '删除';
+                delBtn.addEventListener('click', () => {
+                    if (confirm(`删除“${node.name}”及其所有子分类？`)) {
+                        const descendants = getDescendantIds(node.id);
+                        categories = categories.filter(c => !descendants.includes(c.id));
+                        mods.forEach(m => { if (descendants.includes(m.categoryId)) m.categoryId = null; });
+                        saveData();
+                        openCategoryManager();
+                        applyFiltersAndRender();
+                    }
+                });
+                actions.appendChild(delBtn);
+                div.appendChild(actions);
+                container.appendChild(div);
+                // 子节点
+                if (node.children.length > 0) {
+                    const childContainer = document.createElement('div');
+                    childContainer.style.paddingLeft = '20px';
+                    node.children.forEach(child => {
+                        childContainer.appendChild(renderNode(child));
+                    });
+                    container.appendChild(childContainer);
+                }
+                return div;
+            }
+
+            roots.forEach(root => {
+                container.appendChild(renderNode(root));
+            });
+
+            modal.classList.add('open');
+        }
+
+        // ================================================================
+        //  启动
+        // ================================================================
+        function init() {
+            loadData();
+            // 初始化展开状态：默认展开根分类
+            categories.forEach(c => {
+                if (!c.parentId) expandedNodes.add(c.id);
+            });
+            // 确保默认子分类也展开
+            DEFAULT_SUB_CATEGORIES.forEach(sub => {
+                if (categories.some(c => c.id === sub.id)) expandedNodes.add(sub.id);
+            });
+
+            initEventListeners();
+            applyFiltersAndRender();
+            console.log(`🌾 星露谷模组收藏馆已加载，共 ${mods.length} 个模组，${categories.length} 个分类`);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
